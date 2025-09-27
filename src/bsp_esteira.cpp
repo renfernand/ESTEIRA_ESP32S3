@@ -1,0 +1,332 @@
+#include <Arduino.h>
+#include "bsp_esteira.h"
+#include "global_vars.h"
+#include <WiFi.h>
+
+#define ESP32_RIO_NUM_IO_CHANNELS 10
+#define ESP32_RIO_NUM_IO_CHANNELS_TOTAL ESP32_RIO_NUM_IO_CHANNELS+ESP32_RIO_NUM_IO_CHANNELS
+
+//GPIO PINS
+static const uint8_t DI_Pin[ESP32_RIO_NUM_IO_CHANNELS]     = {4, 5, 6, 7, 15, 16, 17, 9, 8, 18};
+static const uint8_t DQ0_Pin[ESP32_RIO_NUM_IO_CHANNELS]    = {10, 12, 14, 47, 39, 40, 41, 42, 2, 1};
+static const uint8_t DQ1_Pin[ESP32_RIO_NUM_IO_CHANNELS]    = {46, 11, 13, 21, 48, 45, 35, 36, 37, 38};
+
+#define STATUS_LED      43  //IO43 (TXD0)
+#define OE_TOGGLE_BTN   3   //IO3
+
+/*
+ Modbus parameters declaring modbus address space for each modbus register type (coils, discrete inputs, holding registers, input registers)
+ 
+ Coils bank 0:
+ Address    Assignment
+ 0          DQ00
+ 1          DQ01
+ 2          DQ02
+ 3          DQ03
+ 4          DQ04
+ 5          DQ05
+ 6          DQ06
+ 7          DQ07
+ 8          DQ08
+ 9          DQ09
+ 
+ Coils bank 1:
+ Address    Assignment
+ 10         DQ10
+ 11         DQ11
+ 12         DQ12
+ 13         DQ13
+ 14         DQ14
+ 15         DQ15
+ 16         DQ16
+ 17         DQ17
+ 18         DQ18
+ 19         DQ19
+ 20         Output Enable
+ 
+ Discrete Inputs:
+ Address    Assignment
+ 0          DI0
+ 1          DI1
+ 2          DI2
+ 3          DI3
+ 4          DI4
+ 5          DI5
+ 6          DI6
+ 7          DI7
+ 8          DI8
+ 9          DI9
+ */
+//esta area eh somente onde estao os "enderecos modbus" 
+static const uint8_t MB_DI[ESP32_RIO_NUM_IO_CHANNELS]  = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+static const uint8_t MB_DQ0[ESP32_RIO_NUM_IO_CHANNELS] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+static const uint8_t MB_DQ1[ESP32_RIO_NUM_IO_CHANNELS] = {10,11,12,13,14,15,16,17,18,19};
+uint8_t lastMB_DQ0[ESP32_RIO_NUM_IO_CHANNELS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+uint8_t lastMB_DQ1[ESP32_RIO_NUM_IO_CHANNELS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+//esta eh a area onde vai ser colocada os dados vindos do modbus
+word coils_offset[ESP32_RIO_NUM_IO_CHANNELS_TOTAL];
+word digital_input_offset[ESP32_RIO_NUM_IO_CHANNELS];
+word input_regs_offset[ESP32_RIO_NUM_IO_CHANNELS];
+word holding_regs_offset[ESP32_RIO_NUM_IO_CHANNELS];
+
+
+char ca_line1[40]="";  //"IP:xxx.xxx.xxx.xxx"
+char ca_line2[18]="";  //
+char ca_line3[18]="";  //
+
+int  x=0;
+int  minX=0;
+int  i_nModbusMessages=0;   // Number of Modbus messages
+
+
+bool b_disable_oled=false;  //Enable or disable the OLED scan using the Modbus Address 9000  
+
+byte gucframe[10];  //Modbus Frame Header received for the Modbus Routine. Only to Animate the OLED display
+uint32_t reqcount;    
+uint32_t lastreqcount=0;     
+
+static bool outputs_enabled = false;
+volatile bool buttonPressed = false;  
+
+/*
+ Disable all digital outputs
+*/
+void esp32_rio_disable_outputs(void) {
+    for (int i = 0; i < ESP32_RIO_NUM_IO_CHANNELS; i++) {
+        digitalWrite(DQ0_Pin[i], LOW);
+        digitalWrite(DQ1_Pin[i], LOW);
+    }
+}
+
+/*
+ Turn status LED on/off
+*/
+
+void esp32_rio_turn_status_led_on(void) {
+    digitalWrite(STATUS_LED, HIGH);
+}
+
+
+void esp32_rio_turn_status_led_off(void) {
+    digitalWrite(STATUS_LED, LOW);
+}
+
+
+/*
+ Turn on/off a given digital output of a given output bank
+*/
+void esp32_rio_turn_output_on(unsigned int bank_number, unsigned int output_number) {
+    if (bank_number == 0) {
+        digitalWrite(DQ0_Pin[output_number], HIGH);
+    } else if (bank_number == 1) {
+        digitalWrite(DQ1_Pin[output_number], HIGH);
+    }
+}
+void esp32_rio_turn_output_off(unsigned int bank_number, unsigned int output_number) {
+    if (bank_number == 0) {
+        digitalWrite(DQ0_Pin[output_number], LOW);
+    } else if (bank_number == 1) {
+        digitalWrite(DQ1_Pin[output_number], LOW);
+    }
+}
+
+// ISR (função de interrupção)
+void IRAM_ATTR handleButtonInterrupt() {
+  buttonPressed = true;   // marca que o botão foi pressionado
+}
+
+void configure_gpio(void)
+{
+    int i;
+    for (i = 0; i < ESP32_RIO_NUM_IO_CHANNELS; ++i) {
+        pinMode(DI_Pin[i], INPUT);
+        pinMode(DQ0_Pin[i], OUTPUT);
+        pinMode(DQ1_Pin[i], OUTPUT);
+    }
+
+    pinMode(STATUS_LED, OUTPUT);
+    
+    //LED off, outputs disabled by default
+    esp32_rio_turn_status_led_off();
+
+    //disable all the outputs 
+    esp32_rio_disable_outputs();
+
+    pinMode(OE_TOGGLE_BTN, INPUT);
+    attachInterrupt(digitalPinToInterrupt(OE_TOGGLE_BTN), handleButtonInterrupt, FALLING);
+
+}
+
+
+/*
+ Query if digital input of given number is on
+*/
+
+static void on_oe_button_toggle(void) 
+{
+    if (outputs_enabled) {
+        outputs_enabled = false;
+        //MB_TURN_COIL_OFF(OE_COIL_ADDR);
+        esp32_rio_disable_outputs();
+        esp32_rio_turn_status_led_off(); //Alert operator
+    } else {
+        outputs_enabled = true;
+        //MB_TURN_COIL_ON(OE_COIL_ADDR);
+        esp32_rio_turn_status_led_on(); //Alert operator
+    }
+#if DEBUG_SERIAL_ENABLE
+    Serial.print("Digital outputs ");
+    if (outputs_enabled) 
+        Serial.println("enabled.");
+    else
+        Serial.println("disabled.");
+#endif
+}
+
+
+
+/***************************************************************************************** 
+  treat the board 
+******************************************************************************************/
+
+
+LbBoard::LbBoard() {
+    _regs_head = 0;
+    _regs_last = 0;
+}
+/*
+LBTRegister* LbBoard::searchRegister(word address) {
+    LBTRegister *reg = _regs_head;
+    //if there is no register configured, bail
+    if(reg == 0) return(0);
+    //scan through the linked list until the end of the list or the register is found.
+    //return the pointer.
+    do {
+        if (reg->address == address) return(reg);
+        reg = reg->next;
+	} while(reg);
+	return(0);
+}
+*/
+//+--- dos #defines dos dispositivos Modbus do arquivo principal LinkBox.ino para essa biblioteca Modbus.h
+//+--- OBS: Criar um arquivo denominado LinkBox.ino.globals.h não funcionou
+void LbBoard::Set_CoilsOffset(int device, word offset)
+{   // device = 0 Led Verde; = 1 Led Vermelho;  
+    coils_offset[device]=offset;
+}
+
+void LbBoard::Set_DigitalInputOffset(int device, word offset)
+{   // device = 0 Retentive Buttom Red; = 1 Push Buttom Black 
+    digital_input_offset[device]=offset;
+}
+
+void LbBoard::Set_InputRegsOffset(int device, word offset)
+{   // device = 0 Potenciômetro Esquerdo; = 1 Potenciômetro Direito;  
+    input_regs_offset[device]=offset;
+}
+
+void LbBoard::Set_HoldingRegsOffset(int device, word offset)
+{   // device = 0 Led RGB Red; = 1 Led RGB Green; = 2 Led RGB Blue;  
+    holding_regs_offset[device]=offset;
+}
+
+//+---  LbBoard::ModbusInit()
+//+---  Initiate the Modbus Points in the respective area modbus. 
+//+---  Important!!!! The modbus area and scan is used ether to MQTT and Alexa    
+
+void LbBoard::ModbusInit()
+{
+    int i,j;
+    
+    //endereco modbus 0..9
+    for (i = 0; i < ESP32_RIO_NUM_IO_CHANNELS; ++i) {
+       Set_CoilsOffset(i, MB_DQ0[i]);
+    }
+
+    //Modbus address - 10..19
+    j = 0;
+    for (i=ESP32_RIO_NUM_IO_CHANNELS; i< ESP32_RIO_NUM_IO_CHANNELS+ESP32_RIO_NUM_IO_CHANNELS; i++){
+       Set_CoilsOffset(i, MB_DQ1[j]);
+       j++;
+    }
+
+    /*************** MODBUS  *********************/
+    //+-- Add binary Modbus registers (bit=COIL) ---+
+    //+--- Coils ---+
+    for (i=0; i< ESP32_RIO_NUM_IO_CHANNELS; i++){
+       mb1.addCoil(MB_DQ0[i]);
+       mb1.Coil(MB_DQ0[i], false); 
+    }    
+
+    for (i=0; i< ESP32_RIO_NUM_IO_CHANNELS; i++){
+       mb1.addCoil(MB_DQ1[i]);
+       mb1.Coil(MB_DQ1[i], false); 
+    }    
+
+    //+--- Digital Inputs ---+
+    for (i=0; i< ESP32_RIO_NUM_IO_CHANNELS; i++){
+       mb1.addIsts(MB_DI[i]);
+    }    
+   
+    //initialize modbus connection
+    mb1.server();
+}
+ 
+void LbBoard::Task()
+{
+    bool bAux;
+    int i;
+    //+--- Register Type   	Register Number  	Register Size 	Permission
+    //+---    Coil				      1-9999				   1 bit			     R/W     ---+
+    //+-- Copies the Modbus register value (co_LED_GREEN_OFFSET) to the GPIO16=RX2 pin (LED_GREEN)
+    //somente atualiza as saidas se botao das saidas estiver habilitado 
+    if (buttonPressed){
+        buttonPressed = false;
+        on_oe_button_toggle();
+    }
+
+    if (outputs_enabled) {
+
+        for (i=0; i < ESP32_RIO_NUM_IO_CHANNELS; i++){
+
+            //trata banco 0
+            if (mb1.Coil(MB_DQ0[i]))
+               esp32_rio_turn_output_on(0, i);
+            else
+               esp32_rio_turn_output_off(0, i);
+
+#if DEBUG_SERIAL_ENABLE               
+            //digitalWrite(DQ0_Pin[i], (mb1.Coil(MB_DQ0[i])));
+            if (mb1.Coil(MB_DQ0[i]) && (lastMB_DQ0[i] == 0)) {
+                lastMB_DQ0[i] = mb1.Coil(MB_DQ0[i]);
+                Serial.print("ligou DQ0_");
+                Serial.println(i);
+            } 
+#endif
+            //trata banco 1
+           if (mb1.Coil(MB_DQ1[i]))
+                esp32_rio_turn_output_on(1, i);
+            else 
+                esp32_rio_turn_output_off(1, i);
+                
+#if DEBUG_SERIAL_ENABLE            
+            //digitalWrite(DQ1_Pin[i], (mb1.Coil(MB_DQ1[i])));
+            if (mb1.Coil(MB_DQ1[i]) && (lastMB_DQ1[i] == 0)) {
+                    lastMB_DQ1[i] = mb1.Coil(MB_DQ1[i]);
+                    Serial.print("ligou DQ1_");
+                    Serial.println(i);
+            }          
+#endif              
+        }
+        
+    }
+
+    //+--- Register Type   	Register Number  	Register Size 	Permission
+    //+-- Discrete Inputs     10001-19999		     1 bit		       R/W     ---+
+    for (i=0; i< (ESP32_RIO_NUM_IO_CHANNELS); i++){
+       mb1.Ists(MB_DI[i],digitalRead(DI_Pin[i]));
+    }
+
+
+} 
