@@ -1,13 +1,13 @@
 # 🚀 ESP32S3 – Modbus TCP + MQTT Para esteira Industrial
 
 Projeto desenvolvido para automatizar a esteira industrial do laboratorio de Automação Industrial da FEELT-UFU.
-A esteira é basicamente discreta, possuindo entradas digitais de deteccao de peça e também saidas digitais pneumaticas e motores. As entradas e saidas digitais sao todas 24Vdc.
+A esteira é basicamente discreta, possuindo entradas digitais de detecção de peça e saidas digitais pneumáticas e motores. As entradas e saidas digitais sao todas 24Vdc.
 
-O módulo é ESP32_RIO (Remote IO) cujo hardware foi desenvolvido pelo Douglas Almeida e esta detalhado no seguinte repositorio https://github.com/dougsthenri/esp32_rio
-Apesar de ter um codigo fonte desenvolvido pelo autor, foi alterado o codigo para ficar no padrão do laboratorio
-usando o codigo do Prof. Fabio Vincenzi com o codigo base deste repositorio https://github.com/fabiovince/LinkBox
+O módulo ESP32_RIO (Remote IO) cujo hardware e software desenvolvido pelo Douglas Almeida e esta detalhado no seguinte repositorio https://github.com/dougsthenri/esp32_rio.
 
-O módulo ESP32_RIO foi desenvolvido usando **ESP32-S3-WROOM-1** utilizando **PlatformIO (VS Code)** e framework **Arduino**. O firmware integra comunicação **Modbus TCP Slave** e **MQTT** para aplicações de automação industrial.
+Apesar do autor ter desenvolvido um codigo fonte Modbus TCP (usando ESP-IDF), foi alterado o codigo para ficar no padrão do laboratorio usando o codigo do Prof. Fabio Vincenzi com o codigo base deste repositório https://github.com/fabiovince/LinkBox
+
+Portanto, Este código da ESP32_RIO foi desenvolvido usando **ESP32-S3-WROOM-1** utilizando **PlatformIO (VS Code)** e framework **Arduino**. O firmware integra comunicação **Modbus TCP Slave** e **MQTT** para aplicações de automação industrial.
 
 ---
 
@@ -63,8 +63,6 @@ Checklist:
 - ⚠️ Se travar, pressione **BOOT + RESET** para forçar o modo bootloader.
 
 
-yaml
-Copiar código
 
 
 
