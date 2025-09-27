@@ -48,54 +48,17 @@ O sistema foi desenvolvido para:
   - `PubSubClient.h` (para MQTT)
   - `ModbusIP_ESP8266.h` (ou equivalente ESP32)
 
----
 
-## ⚙️ Instalação e Uso
+## 🚨 ATENÇÃO – Problema conhecido no upload + Serial Monitor
 
-Clone o repositório:
+❗ **Nunca faça upload com o Monitor Serial ligado no VSCode**.  
+Isso trava a porta USB CDC e impede o download do firmware.
 
-```bash
-git clone https://github.com/seuusuario/seuprojeto.git
-cd seuprojeto
-Compile e faça o upload:
+Checklist:
+- ✅ Feche o Monitor antes de `Upload`.
+- ✅ Reabra o Monitor somente depois da gravação.
+- ⚠️ Se travar, pressione **BOOT + RESET** para forçar o modo bootloader.
 
-bash
-Copiar código
-pio run --target upload
-Abra o monitor serial:
-
-bash
-Copiar código
-pio device monitor
-🌐 Configuração de Rede
-No código principal (main.cpp):
-
-cpp
-Copiar código
-const char* ssid = "LinkBox_ssid";
-const char* password = "LinkBox_password";
-
-IPAddress local_IP(192, 168, 1, 200);
-IPAddress gateway(192, 168, 1, 1);
-IPAddress subnet(255, 255, 255, 0);
-🖥️ Exemplo de Saída Serial
-makefile
-Copiar código
-Setup funcionou!!!!
-Teste1 = 0
-Teste1 = 1
-Teste1 = 2
-📂 Estrutura do Projeto
-makefile
-Copiar código
-├── src/
-│   └── main.cpp         # Código principal
-├── include/             # Headers (.h)
-├── lib/                 # Bibliotecas locais
-├── platformio.ini       # Configuração da build
-└── README.md            # Este arquivo
-📜 Licença
-Este projeto está licenciado sob a MIT License.
 
 yaml
 Copiar código
