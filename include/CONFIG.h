@@ -5,7 +5,7 @@
 //+------ CONFIGURAÇÃO ----------------------------------------------+
 //+------------------------------------------------------------------+
 //+--- LB0 ----------------------------+
-#define LB0_Id1_MAC "48:ca:43:89:c0:0c"
+#define LB0_Id1_MAC "08:3A:F2:B8:46:14"
 #define LB0_Id1_client "LB0-SERVER-01-"
 #define LB0_Id1_MQTT 1
 //
@@ -132,5 +132,10 @@
 //
 #define FAB_mqtt_broker_IP "192.168.1.233"
 
-
+//+--- ESTEIRA --------------+
+#define EST_Id1_MAC "48:ca:43:89:c0:0c"
+#define EST_Id1_client "EST-SERVER-01-"
+#define EST_Id1_MQTT 1
+//
+#define EST_mqtt_broker_IP "192.168.0.233"
 #endif

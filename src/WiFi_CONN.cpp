@@ -5,12 +5,14 @@
 #include "MQTT.h"
 //#include <ArduinoOTA.h>
 
+#if DHCP_DISABLE
 // Configuração de IP fixo
 IPAddress local_IP(192, 168, 0, 218);  
 IPAddress gateway(192, 168, 0, 1);     
 IPAddress subnet(255, 255, 255, 0);    
 IPAddress primaryDNS(192, 168, 0, 1);  
 IPAddress secondaryDNS(8, 8, 4, 4);     // DNS secundário (Google)
+#endif
 
 void WiFi_CONNECT()
 {
@@ -21,17 +23,19 @@ void WiFi_CONNECT()
     const char* Alexa_password = "domotica1c203a";
 
     const char* LinkBox_ssid = "Rede udi";
-    const char* LinkBox_password = "1j4b7i2g$4";
+    const char* LinkBox_password = "esp32rio1234";
 
     const char* Sala_1C205_ssid = "INDUSTRIA";
     const char* Sala_1C205_password = "industria50";
     //+---------------------------------------------------+
 
     //WiFi.mode(WIFI_STA);
+ #if DHCP_DISABLE   
     // Configura IP fixo
     if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
         Serial.println("Falha ao configurar IP fixo");
     }
+#endif
     
     if(by_stored_protocol_option==MODBUS_PROTOCOL_LinkBox)
     {
@@ -108,6 +112,8 @@ void WiFi_CONNECT()
     //
     else if(s_mac==FAB_Id1_MAC){ s_client_id += FAB_Id1_client; s_mqtt_broker_IP += FAB_mqtt_broker_IP; u_thisDeviceId= FAB_Id1_MQTT; }
     else if(s_mac==FAB_Id2_MAC){ s_client_id += FAB_Id2_client; s_mqtt_broker_IP += FAB_mqtt_broker_IP; u_thisDeviceId= FAB_Id2_MQTT; }
+    //
+    else if(s_mac==EST_Id1_MAC){ s_client_id += EST_Id1_client; s_mqtt_broker_IP += EST_mqtt_broker_IP; u_thisDeviceId= EST_Id1_MQTT; }
     //
     else { s_client_id += "ESP32_NOVA-"; s_mqtt_broker_IP += "192.168.1.233"; u_thisDeviceId= 1; }
 

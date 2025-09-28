@@ -8,9 +8,10 @@
 //#define Enable_AHT10 //sensor de temperatura e umidade
 //#define MOTOR "KitMotor"
 //#define ENABLE_OLED //quando a placa tem display OLED
-//#define OTA_ENABLED 1 //quando desejar fazer download de firmware via wifi
+#define OTA_ENABLED 1 //quando desejar fazer download de firmware via wifi
+#define DHCP_DISABLE 1 
+#define DEBUG_SERIAL_ENABLE 1
 
-#define DEBUG_SERIAL_ENABLE 0
 //+----------------------------------------------------------------------------+
 //+----------------------------------------------------------------------------+
 //+--- If Enable_COMMON_ANODE_RGB is not defined, common  cathode is selected:
@@ -101,8 +102,6 @@ extern bool b_MqttStatus;
 extern String s_mqtt_broker_IP; 
 extern uint8_t u_thisDeviceId; //Client/Slave Device Number (usado na comunicação MQTT para diferenciar dispositivos)
 
-
-
 //+----------------------------+
 //+--------- OLED -------------+
 //+----------------------------+
@@ -122,8 +121,8 @@ extern char s_oled_header[40];
 //AHTxx aht10(AHTXX_ADDRESS_X38, AHT1x_SENSOR); //sensor address, sensor type
 //Adafruit_AHTX0 aht10; //sensor address, sensor type
 //#endif
-extern bool b_AHT10_INIT_OK;
-extern Adafruit_AHTX0 aht10; //sensor address, sensor type
+//extern bool b_AHT10_INIT_OK;
+//extern Adafruit_AHTX0 aht10; //sensor address, sensor type
 
 
 

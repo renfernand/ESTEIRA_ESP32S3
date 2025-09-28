@@ -6,54 +6,6 @@
 //                                                                 Updated: 2024/05/03          |         
 //  
 //+---------------------------------------------------------------------------------------------+
-
-#include <WiFi.h>
-#include <WiFi_CONN.h>
-#include <Alexa.h>
-#include <ESPmDNS.h>
-#include <WiFiUdp.h>
-#include <Arduino.h>
-//#include <ArduinoOTA.h>
-#include "global_vars.h"
-#include <ModbusIP_ESP8266.h>
-
-
-//+--- Alexa ---+
-fauxmoESP fauxmo;
-
-//+--- OLED ---+
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-
-//+--- Sensor AHT10 ---+
-#ifdef Enable_AHT10
-  #include <Adafruit_AHTX0.h>
-  #include <AHT10.h>
-  bool b_AHT10_INIT_OK = false;
-  int ahtValue;  //to store T/RH result
-  Adafruit_AHTX0 aht10; //sensor address, sensor type
-#endif
-
-
-//+--- CONFIG ---+/
-#include "CONFIG.h"
-#include "bsp_esteira.h"
-
-//PROTOCOLS
-String s_client_id="";
-
-
-//+--- MQTT LIBs ---+
-#include <PubSubClient.h>
-#include "MQTT.h"
-//#define MQTT_MAX_PACKET_SIZE 2048
-//#include "SENSOR.h"
-
-//+--- Modbus objects ---+
-LbBoard lbmb;
-ModbusIP mb1;
-
 /***************  MODBUS ********************************/
 // OBS: A biblioteca Modbus utiliza o padrao modbus novo (modbus.org) 
 // desse modo, cada tipo de registrador (Coil, Discrete Inputs, Input Register e Holding Register)
@@ -93,19 +45,44 @@ ModbusIP mb1;
 
 
 
+#include "global_vars.h"
+#include <WiFi.h>
+#include <WiFi_CONN.h>
+#include <Alexa.h>
+#include <ESPmDNS.h>
+#include <WiFiUdp.h>
+#include <Arduino.h>
+#include <ArduinoOTA.h>
+#include <ModbusIP_ESP8266.h>
+#include "CONFIG.h"
+#include "bsp_esteira.h"
+
+//+--- MQTT LIBs ---+
+#include <PubSubClient.h>
+#include "MQTT.h"
+//#include "SENSOR.h"
+
+//PROTOCOLS
+String s_client_id="";
+
+//+--- Modbus objects ---+
+LbBoard lbmb;
+ModbusIP mb1;
+
+//seleciona a rede wifi
+// MODBUS_PROTOCOL_LinkBox ou  MODBUS_PROTOCOL_1C205
+unsigned int by_stored_protocol_option=MODBUS_PROTOCOL_LinkBox;
 
 uint8_t u_thisDeviceId=0; //Client/Slave Device Number (usado na comunicação MQTT para diferenciar dispositivos)
 
 
  /***************  Telnet ********************************/
+#ifdef OTA_ENABLED   
 WiFiServer TelnetServer(23); // Telnet Server Declaration port 23
-#if 0
 WiFiClient SerialOTA;        // Telnet Client Declaration 
-#endif
 bool haveClient = false;     //client detection flag
+#endif
 //+------------------------------------------------------+/
-const char* SSID = "Rede udi";
-const char* password = "1j4b7i2g$4";
 
 //+----------------------------+
 //+--- Temporização -----------+
@@ -114,37 +91,11 @@ const char* password = "1j4b7i2g$4";
 //+--- MQTT POLLING TIME ---+
 #define def_mqtt_polling_ms 1  // MQTT polling time (milliseconds)
 unsigned long ul_MqttPoll_PrevTime = 0;  // will store last time sensors was read
-
-//+--- SENSORS POLLING TIME ---+
-#define def_sensors_polling_ms 5000  // sensors polling time (milliseconds)
-unsigned long ul_SensorRead_PrevTime = 0;  // will store last time sensors was read
-
-//+--- BUTTOM PRESS/RELEASE TIME ---+
-unsigned long ul_PreviousMsButtonRead = 0;  // will store last time sensors was read
+//#define MQTT_MAX_PACKET_SIZE 2048
 
 //+--- One Second Timming ---+
 unsigned long ul_OneSecond_PrevTime=0;
 
-//+--- PUSH BUTTON ---+
-unsigned long ul_PushButton_PrevTime;
-bool b_Pressed_Block=false;
-bool b_Released_Block=false;
-
-//+--- Menu Variables ---+
-bool b_GoToMenu=false;
-bool b_MenuHold=false; //Keeps the menu activated until a choice is made or detects inactivity for 5 or more seconds
-bool b_MenuFirstCall=false;
-bool b_GoToLoop=false;
-char by_menu_option=0;
-
-//seleciona um dos seguintes protocolos no inicio
-// MODBUS_PROTOCOL_LinkBox
-// MODBUS_PROTOCOL_1C205
-unsigned int by_stored_protocol_option=MODBUS_PROTOCOL_LinkBox;
-
-unsigned int ui_menu_protocol_option=0;
-unsigned int ui_ms_button_pressed=0;
-unsigned int ui_ms_button_released=0;
 
 //+----------------------------+
 //+--- MQTT -------------------+
@@ -156,14 +107,6 @@ bool b_mqtt_reconnect=false;
 bool b_mqtt_reconnected_message=false;    
 int i_mqtt_reconnected_display_seconds=0; 
 
-
-//+----------------------------+
-//+--------- OLED -------------+
-//+----------------------------+
-#ifdef ENABLE_OLED
-char s_oled_header[40];
-char s_oled_hdrcmp[15];
-#endif
 
 String s_mac=""; //MAC Address
 
@@ -229,8 +172,6 @@ void setup()
     lbmb.ModbusInit();
 
     ul_OneSecond_PrevTime=millis();    
-    //ul_SensorRead_PrevTime=millis();
-    //ul_PushButton_PrevTime=millis();
 
 }
 
