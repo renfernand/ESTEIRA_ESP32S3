@@ -32,11 +32,9 @@ GATEWAY	192.168.0.1
 Atenção!!! A esp32-RIO não é isolada e desta forma deve-se prevenir não ligar ela com a bancada do CLP em paralelo. 
 Fique atento!!!! LED verde no painel indica fonte ESP32 Energizada (basta desligar a fonte da tomada!!!
 
+Como ligar a esteira via Modbus TCP (usando a ESP32-RIO)
 
----
-## 🔧 Como ligar a esteira via Modbus TCP (usando a ESP32-RIO)
-
-	![figura1](./figura1.jpg)
+![figura 1](./figura2.png)
 
 
 ## 🔧 Como ligar a esteira no Painel
@@ -45,7 +43,7 @@ Os IOs disponíveis na caixa de bornes (fêmea) já estão todos conectados na e
 
 A única preocupação é com os motores. Neste caso, cada motor está associado a um relé. E deve ser alimentado os reles com 24V. Entao basta ligar um cabo banana do +24Vdc (borne vermelho) com o +VCC da entrada do relé (borne vermelho). Na figura abaixo mostra a ligação do motor ME principal da esteira, e o MR3 (motor da estação 3 para direita). O mesmo deve ser feito com cada um dos motores que se desejar ligar. Repare que os pinos pretos de cada motor não precisam de ligação externa pois já está interligado internamente na ESP-RIO. 
 
-	![figura2](./figura2.jpg)
+![figura 2](./figura3.jpg)
 
 ## 🚨 ATENÇÃO – Problema conhecido no upload + Serial Monitor
 
@@ -57,8 +55,8 @@ Checklist:
 - ✅ Reabra o Monitor somente depois da gravação.
 - ⚠️ Se travar, pressione **BOOT + RESET** para forçar o modo bootloader.
 
-
-![ManualEsteira](./ComoLigaraEsteiracomaESP32-RIO.pdf)
+Aqui está o manual da esteira em formato pdf.
+![Manual Esteira](./ComoLigaraEsteiracomaESP32-RIO.pdf)
 
 
 
