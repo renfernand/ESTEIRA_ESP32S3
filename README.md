@@ -14,18 +14,6 @@ Portanto, Este código da ESP32_RIO foi desenvolvido usando **ESP32-S3-WROOM-1**
 
 ---
 
-## 📑 Sumário
-- [Descrição](#-descrição)
-- [Requisitos de Hardware](#-requisitos-de-hardware)
-- [Requisitos de Software](#-requisitos-de-software)
-- [Instalação e Uso](#-instalação-e-uso)
-- [Configuração de Rede](#-configuração-de-rede)
-- [Exemplo de Saída Serial](#-exemplo-de-saída-serial)
-- [Estrutura do Projeto](#-estrutura-do-projeto)
-- [Licença](#-licença)
-
----
-
 ## 📝 Descrição
 O sistema foi desenvolvido para:
 - Operar como **Modbus TCP Slave** em rede local.
@@ -35,25 +23,29 @@ O sistema foi desenvolvido para:
 
 ---
 
-## 🔧 Requisitos de Hardware
-- ESP32-S3-WROOM-1 (montado em PCB própria)
-- 10 Sensores digitais 24Vdc NA  (Nao isoladas)
-- 20 Saidas digitais 24Vdc NA    (Nao isoladas)
-- 1 Botão de reset
-- 1 Botão de Enable/Disable Outputs 
-- Fonte de alimentação 24Vdc
-- Conexão Wi-Fi com IP Fixo (ver WIFI_CONN.cpp) com antena externa
+## 🔧 Painel com ESP32-RIO
+A esp32-RIO já está totalmente ligada a esteira e funciona via Modbus TCP através de comunicação sem fio (Wifi do laboratório). 
+IP FIXO		192.168.0.248
+SUB MASK	255.255.252.0
+GATEWAY	192.168.0.1
+
+Atenção!!! A esp32-RIO não é isolada e desta forma deve-se prevenir não ligar ela com a bancada do CLP em paralelo. 
+Fique atento!!!! LED verde no painel indica fonte ESP32 Energizada (basta desligar a fonte da tomada!!!
+
 
 ---
+## 🔧 Como ligar a esteira via Modbus TCP (usando a ESP32-RIO)
 
-## 💻 Requisitos de Software
-- [PlatformIO](https://platformio.org/) (recomendado no VS Code)
-- Framework **Arduino-ESP32**
-- Bibliotecas:
-  - `WiFi.h`
-  - `PubSubClient.h` (para MQTT)
-  - `ModbusIP_ESP8266.h` (ou equivalente ESP32)
+	![figura1](./figura1.jpg)
 
+
+## 🔧 Como ligar a esteira no Painel
+
+Os IOs disponíveis na caixa de bornes (fêmea) já estão todos conectados na esteira de acordo com a tabela acima. A figura acima mostra as borneiras disponíveis (a ligação tanto das entradas quanto das saídas é do tipo sink).
+
+A única preocupação é com os motores. Neste caso, cada motor está associado a um relé. E deve ser alimentado os reles com 24V. Entao basta ligar um cabo banana do +24Vdc (borne vermelho) com o +VCC da entrada do relé (borne vermelho). Na figura abaixo mostra a ligação do motor ME principal da esteira, e o MR3 (motor da estação 3 para direita). O mesmo deve ser feito com cada um dos motores que se desejar ligar. Repare que os pinos pretos de cada motor não precisam de ligação externa pois já está interligado internamente na ESP-RIO. 
+
+	![figura2](./figura2.jpg)
 
 ## 🚨 ATENÇÃO – Problema conhecido no upload + Serial Monitor
 
