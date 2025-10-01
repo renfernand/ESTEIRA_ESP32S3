@@ -354,7 +354,7 @@ void LbBoard::Task()
     }
     
     //verifica status das saidas (mesmo status do LED)
-    mb1.Ists(MB_OUTPUT_ENABLED,outputs_enabled);
+    mb1.Ists(MB_OUTPUT_ENABLED,hw_outputs_enabled);
 
 
 } 

@@ -71,7 +71,7 @@ ModbusIP mb1;
 
 //seleciona a rede wifi
 // MODBUS_PROTOCOL_LinkBox ou  MODBUS_PROTOCOL_1C205
-unsigned int by_stored_protocol_option=MODBUS_PROTOCOL_LinkBox;
+unsigned int by_stored_protocol_option=REDE_WIFI ;
 
 uint8_t u_thisDeviceId=0; //Client/Slave Device Number (usado na comunicação MQTT para diferenciar dispositivos)
 

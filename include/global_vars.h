@@ -12,6 +12,10 @@
 #define DHCP_DISABLE 1 
 #define DEBUG_SERIAL_ENABLE 1
 
+//seleciona a rede wifi
+// MODBUS_PROTOCOL_LinkBox ou  MODBUS_PROTOCOL_1C205
+#define REDE_WIFI MODBUS_PROTOCOL_1C205
+
 //+----------------------------------------------------------------------------+
 //+----------------------------------------------------------------------------+
 //+--- If Enable_COMMON_ANODE_RGB is not defined, common  cathode is selected:

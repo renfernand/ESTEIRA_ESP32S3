@@ -7,11 +7,11 @@
 
 #if DHCP_DISABLE
 // Configuração de IP fixo
-IPAddress local_IP(192, 168, 0, 218);  
+IPAddress local_IP(192, 168, 0, 248);  
 IPAddress gateway(192, 168, 0, 1);     
-IPAddress subnet(255, 255, 255, 0);    
-IPAddress primaryDNS(192, 168, 0, 1);  
-IPAddress secondaryDNS(8, 8, 4, 4);     // DNS secundário (Google)
+IPAddress subnet(255, 255, 252, 0);    
+IPAddress primaryDNS(10, 0, 182, 2);  
+IPAddress secondaryDNS(200, 19, 146, 201);     
 #endif
 
 void WiFi_CONNECT()
