@@ -58,7 +58,7 @@ Checklist:
 - ⚠️ Se travar, pressione **BOOT + RESET** para forçar o modo bootloader.
 
 
-
+![ManualEsteira](./ComoLigaraEsteiracomaESP32-RIO.pdf)
 
 
 
