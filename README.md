@@ -55,7 +55,7 @@ Checklist:
 - ✅ Reabra o Monitor somente depois da gravação.
 - ⚠️ Se travar, pressione **BOOT + RESET** para forçar o modo bootloader.
 
-Aqui está o manual da esteira em formato pdf.
+## 📝 Manual Esteira
 ![Manual Esteira](./ComoLigaraEsteiracomaESP32-RIO.pdf)
 
 
